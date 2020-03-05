@@ -1,0 +1,294 @@
+{
+    "name": "cs-skillset",
+    "description": "Text Cognitive Skills",
+    "skills": [
+      {
+        "@odata.type": "#Microsoft.Skills.Vision.OcrSkill",
+        "name": "#1",
+        "description": "Extract text (plain and structured) from image.",
+        "context": "/document/normalized_images/*",
+        "textExtractionAlgorithm": "printed",
+        "lineEnding": "Space",
+        "defaultLanguageCode": "en",
+        "detectOrientation": "true",
+        "inputs": [
+          {
+            "name": "image",
+            "source": "/document/normalized_images/*"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "text",
+            "targetName": "myOcrText"
+          }
+        ]
+      },
+      {
+        "@odata.type": "#Microsoft.Skills.Text.MergeSkill",
+        "name": "#2",
+        "description": "Create mergedText, which includes all the textual representation of each image inserted at the right location in the content field.",
+        "context": "/document",
+        "insertPreTag": " ",
+        "insertPostTag": " ",
+        "inputs": [
+          {
+            "name": "text",
+            "source": "/document/content"
+          },
+          {
+            "name": "itemsToInsert",
+            "source": "/document/normalized_images/*/myOcrText"
+          },
+          {
+            "name": "offsets",
+            "source": "/document/normalized_images/*/contentOffset"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "mergedText",
+            "targetName": "mergedText"
+          }
+        ]
+      },
+      {
+        "@odata.type": "#Microsoft.Skills.Text.SplitSkill",
+        "name": "#3",
+        "description": null,
+        "context": "/document",
+        "defaultLanguageCode": "en",
+        "textSplitMode": "pages",
+        "maximumPageLength": 5000,
+        "inputs": [
+          {
+            "name": "text",
+            "source": "/document/mergedText"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "textItems",
+            "targetName": "pages"
+          }
+        ]
+      },
+      {
+        "@odata.type": "#Microsoft.Skills.Text.LanguageDetectionSkill",
+        "name": "#4",
+        "description": null,
+        "context": "/document",
+        "inputs": [
+          {
+            "name": "text",
+            "source": "/document/pages/0"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "languageCode",
+            "targetName": "languageCode"
+          }
+        ]
+      },
+      {
+        "@odata.type": "#Microsoft.Skills.Text.KeyPhraseExtractionSkill",
+        "name": "#5",
+        "description": null,
+        "context": "/document/pages/*",
+        "defaultLanguageCode": "en",
+        "maxKeyPhraseCount": 200,
+        "inputs": [
+          {
+            "name": "text",
+            "source": "/document/pages/*"
+          },
+          {
+            "name": "languageCode",
+            "source": "/document/languageCode"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "keyPhrases",
+            "targetName": "keyPhrases"
+          }
+        ]
+      },
+      {
+        "@odata.type": "#Microsoft.Skills.Text.EntityRecognitionSkill",
+        "name": "#6",
+        "description": "Entities",
+        "context": "/document/pages/*",
+        "categories": [
+          "Organization",
+          "Person",
+          "Location"
+        ],
+        "defaultLanguageCode": "en",
+        "minimumPrecision": null,
+        "includeTypelessEntities": null,
+        "inputs": [
+          {
+            "name": "text",
+            "source": "/document/pages/*"
+          },
+          {
+            "name": "languageCode",
+            "source": "/document/languageCode"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "organizations",
+            "targetName": "organizations"
+          },
+          {
+            "name": "persons",
+            "targetName": "persons"
+          },
+          {
+            "name": "locations",
+            "targetName": "locations"
+          }
+        ]
+      },
+      {
+        "@odata.type": "#Microsoft.Skills.Custom.WebApiSkill",
+        "name": "#7",
+        "description": "Filter the keyPhrases",
+        "context": "/document/pages/*",
+        "uri": "https://__SETUP__.azurewebsites.net/api/facetsfiltering?facetname=keyphrases",
+        "httpMethod": "POST",
+        "timeout": "PT30S",
+        "batchSize": 1000,
+        "degreeOfParallelism": null,
+        "inputs": [
+          {
+            "name": "facets",
+            "source": "/document/pages/*/keyPhrases"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "facets",
+            "targetName": "keyphrasesfiltered"
+          }
+        ],
+        "httpHeaders": {}
+      },
+      {
+        "@odata.type": "#Microsoft.Skills.Custom.WebApiSkill",
+        "name": "#8",
+        "description": "Fitler the organizations",
+        "context": "/document/pages/*",
+        "uri": "https://__SETUP__.azurewebsites.net/api/facetsfiltering?facetname=organizations",
+        "httpMethod": "POST",
+        "timeout": "PT30S",
+        "batchSize": 1000,
+        "degreeOfParallelism": null,
+        "inputs": [
+          {
+            "name": "facets",
+            "source": "/document/pages/*/organizations"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "facets",
+            "targetName": "organizationsfiltered"
+          }
+        ],
+        "httpHeaders": {}
+      },
+      {
+        "@odata.type": "#Microsoft.Skills.Custom.WebApiSkill",
+        "name": "#9",
+        "description": "Filter the persons",
+        "context": "/document/pages/*",
+        "uri": "https://__SETUP__.azurewebsites.net/api/facetsfiltering?facetname=persons",
+        "httpMethod": "POST",
+        "timeout": "PT30S",
+        "batchSize": 1000,
+        "degreeOfParallelism": null,
+        "inputs": [
+          {
+            "name": "facets",
+            "source": "/document/pages/*/persons"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "facets",
+            "targetName": "personsfiltered"
+          }
+        ],
+        "httpHeaders": {}
+      },
+      {
+        "@odata.type": "#Microsoft.Skills.Custom.WebApiSkill",
+        "name": "#10",
+        "description": "Fitler the locations",
+        "context": "/document/pages/*",
+        "uri": "https://__SETUP__.azurewebsites.net/api/facetsfiltering?facetname=locations",
+        "httpMethod": "POST",
+        "timeout": "PT30S",
+        "batchSize": 1000,
+        "degreeOfParallelism": null,
+        "inputs": [
+          {
+            "name": "facets",
+            "source": "/document/pages/*/locations"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "facets",
+            "targetName": "locationsfiltered"
+          }
+        ],
+        "httpHeaders": {}
+      },
+      {
+        "@odata.type": "#Microsoft.Skills.Custom.WebApiSkill",
+        "name": "#11 - A Custom Skill leveraring Azure AI Custom Vision",
+        "description": "",
+        "context": "/document/normalized_images/*",
+        "uri": "__SETUP_YOUR_CUSTOM_VISION_MODEL_PUBLISHED_ENDPOINT_URI__",
+        "httpMethod": "POST",
+        "timeout": "PT30S",
+        "batchSize": 1,
+        "degreeOfParallelism": 1,
+        "inputs": [
+          {
+            "name": "image",
+            "source": "/document/normalized_images/*"
+          },
+          {
+            "name": "document_name",
+            "source": "/document/metadata_storage_name"
+          },
+          {
+            "name": "document_path",
+            "source": "/document/metadata_storage_path"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "docType",
+            "targetName": "docType"
+          },
+          {
+            "name": "docTypeProbability",
+            "targetName": "docTypeProbability"
+          }
+        ],
+        "httpHeaders": {}
+      }
+    ],
+    "cognitiveServices": {
+      "@odata.type": "#Microsoft.Azure.Search.CognitiveServicesByKey",
+      "key": "__SETUP_FROM_AZURE_PORTAL__",
+      "description": "/subscriptions/__SETUP_YOUR_SUBSCRIPTION_ID__/resourceGroups/__SETUP_YOUR_RESOURCE_GROUP_NAME__/providers/Microsoft.CognitiveServices/accounts/__SETUP_YOUR_COGNITIVE_SERVICES_NAME__"
+    }
+  }

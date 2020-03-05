@@ -1,0 +1,68 @@
+{
+    "name": "cs-indexer",
+    "description": null,
+    "dataSourceName": "demodata",
+    "skillsetName": "cs-skillset",
+    "targetIndexName": "cs-index",
+    "disabled": null,
+    "schedule": {
+        "interval": "PT1H",
+        "startTime": "2019-01-01T00:00:00Z"
+    },
+    "parameters": {
+        "batchSize": 20,
+        "maxFailedItems": -1,
+        "maxFailedItemsPerBatch": -1,
+        "base64EncodeKeys": true,
+        "configuration": {
+            "dataToExtract": "contentAndMetadata",
+            "firstLineContainsHeaders": false,
+            "delimitedTextDelimiter": ",",
+            "imageAction": "generateNormalizedImages"
+        }
+    },
+    "fieldMappings": [
+        {
+            "sourceFieldName": "metadata_storage_name",
+            "targetFieldName": "id"
+        },
+        {
+            "sourceFieldName": "metadata_storage_name",
+            "targetFieldName": "metadata_storage_name"
+        }
+    ],
+    "outputFieldMappings": [
+        {
+            "sourceFieldName": "/document/mergedText",
+            "targetFieldName": "content"
+        },
+        {
+            "sourceFieldName": "/document/pages/*/keyphrasesfiltered/*",
+            "targetFieldName": "keyPhrases"
+        },
+        {
+            "sourceFieldName": "/document/pages/*/personsfiltered/*",
+            "targetFieldName": "persons"
+        },
+        {
+            "sourceFieldName": "/document/pages/*/organizationsfiltered/*",
+            "targetFieldName": "organizations"
+        },
+        {
+            "sourceFieldName": "/document/pages/*/locationsfiltered/*",
+            "targetFieldName": "locations"
+        },
+        {
+            "sourceFieldName": "/document/languageCode",
+            "targetFieldName": "language"
+        },
+        {
+            "sourceFieldName": "/document/normalized_images/*/docType",
+            "targetFieldName": "docTypes"
+        },
+        {
+            "sourceFieldName": "/document/normalized_images/*/docTypeProbability",
+            "targetFieldName": "docTypeProbabilities"
+        }
+    ]
+}

@@ -1,0 +1,4 @@
+name: az-cognitive-search
+dependencies:
+- python=3.7
+- pylint
