@@ -1,4 +1,4 @@
-name: az-cognitive-search
+name: az-knowledge-mining-workshop
 dependencies:
 - python=3.7
 - pylint
